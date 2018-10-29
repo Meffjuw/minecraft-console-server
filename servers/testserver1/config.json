@@ -1,0 +1,8 @@
+{
+  "id": "testserver1",
+  "name": "Test Server 1",
+  "desc": "Standard vanilla server for 1.13.0",
+  "version": "1.13.0",
+  "isForge": false,
+  "forgeVersion": null
+}
