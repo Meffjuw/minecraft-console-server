@@ -10,7 +10,10 @@
       "protocol": "inspector",
       "outFiles": [
         "${workspaceFolder}/bin/**/*.js"
-      ]
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
     }
   ]
 }

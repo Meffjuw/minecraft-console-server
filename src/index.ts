@@ -6,10 +6,10 @@ import {
   exists,
   readFile,
   readDir 
-} from "./util";
+} from "./utils";
 
 import { IServerConfig } from "./interfaces";
-import { ServerInstance } from "./ServerInstance";
+import { ServerInstance } from "./classes/ServerInstance";
 
 const isValidDirectory = async (source: string): Promise<any> => {
   const isDirectory = (await lstat(source)).isDirectory();
@@ -46,9 +46,48 @@ class Server {
     this.io.on("connection", (socket: SocketIO.Socket) => {
       socket.emit("init", this.serverList);
 
-      socket.on("instance", (request: string) => {
-        console.log(request);
+      socket.on("instance", async (request: string) => {
+        const instance = await this.getInstance(request);
+
+        socket.emit("status", {
+          serverId: request,
+          status: instance.status
+        });
+
+        const log = await instance.getLatestLog();
+
+        if (log) {
+          socket.emit("log", log);
+        }
       });
+
+      socket.on("START_SERVER", (request: string) => {
+        this.getInstance(request).start();
+      });
+
+      socket.on("STOP_SERVER", (request: string) => {
+        this.getInstance(request).stop();
+      });
+
+      socket.on("SAVE_WORLD", (request: string) => {
+        this.getInstance(request).save();
+      });
+
+      socket.on("PROPS", async (request: string) => {
+        const props = await this.getInstance(request).properties();
+
+        socket.emit("PROPS_DETAILS", {
+          serverId: request,
+          props
+        });
+      })
+
+      socket.on("COMMAND", (payload: { request: string, command: string }) => {
+        const { command, request } = payload;
+
+        this.getInstance(request).command(command);
+      });
+
     });
 
     return this;
@@ -71,7 +110,7 @@ class Server {
     return ret;
   }
 
-  private async getInstance(_name: string): Promise<ServerInstance> {
+  private getInstance(_name: string): ServerInstance {
     let instance = this.instances.get(_name);
 
     if (!instance) {
@@ -79,7 +118,7 @@ class Server {
 
       instance = new ServerInstance(data, this.io);
 
-      await instance.init();
+      this.instances.set(_name, instance);
     }
 
     return instance;
