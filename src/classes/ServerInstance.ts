@@ -42,9 +42,16 @@ export class ServerInstance {
 
   public async getLatestLog(): Promise<string> {
     const logPath = path.join("servers", this.data.id, "logs", "latest.log");
-    const log = await readFile(logPath);
+
+    try {
+      const log = await readFile(logPath);
+
+      return log.toString("utf8");
+    } catch (e) {
+      console.error(e.message);
+    }
     
-    return log.toString("utf8");
+    return null;
   }
 
   public getState(): any {
@@ -62,7 +69,11 @@ export class ServerInstance {
       status: this.status
     });
 
-    this.child = child.spawn("java", ["-Xmx1G", "-Xms1G", "-jar", path.join("servers", this.data.id, "server.jar"), "nogui"]);
+    try {
+      this.child = child.spawn("java", ["-Xmx1G", "-Xms1G", "-jar", "server.jar", "nogui"], { cwd: path.join("servers", this.data.id) });
+    } catch (e) {
+      console.error(e.message);
+    }
 
     this.child.on("exit", () => {
       this.child = null;
