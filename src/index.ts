@@ -82,10 +82,10 @@ class Server {
         });
       })
 
-      socket.on("COMMAND", (payload: { request: string, command: string }) => {
-        const { command, request } = payload;
+      socket.on("COMMAND", (payload: { serverId: string, command: string }) => {
+        const { command, serverId } = payload;
 
-        this.getInstance(request).command(command);
+        this.getInstance(serverId).command(command);
       });
 
     });
@@ -116,9 +116,12 @@ class Server {
     if (!instance) {
       const data = this.serverList.find(config => config.id === _name);
 
-      instance = new ServerInstance(data, this.io);
+      if (data) {
+        instance = new ServerInstance(data, this.io);
 
-      this.instances.set(_name, instance);
+        this.instances.set(_name, instance);
+      }
+
     }
 
     return instance;
